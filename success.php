@@ -1,15 +1,20 @@
 <?php
-
 require("includes/common.php");
+
 if (!isset($_SESSION['email'])) {
     header('location: index.php');
+    exit;
 }
+
 $user_id = $_SESSION['user_id'];
 
 
-//We will change the status of the items purchased by the user to 'Confirmed'
-$query = "UPDATE users_items SET status='Confirmed' WHERE user_id=" . $user_id . "  and status='Added to cart'";
-mysqli_query($con, $query) or die($mysqli_error($con));
+$query = "UPDATE users_items SET status='Confirmed' WHERE user_id=$1 AND status='Added to cart'";
+$result = pg_query_params($con, $query, array($user_id));
+
+if (!$result) {
+    die("Error updating order status: " . pg_last_error($con));
+}
 ?>
 <!DOCTYPE html>
 <!--
