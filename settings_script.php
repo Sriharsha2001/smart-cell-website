@@ -4,33 +4,46 @@ require("includes/common.php");
 
 if (!isset($_SESSION['email'])) {
     header('location: index.php');
+    exit;
 }
 
 $old_pass = $_POST['oldpassword'];
-$old_pass = mysqli_real_escape_string($con, $old_pass);
-
 $new_pass = $_POST['newpassword'];
-$new_pass = mysqli_real_escape_string($con, $new_pass);
-
-
 $rep_pass = $_POST['renewpassword'];
-$rep_pass = mysqli_real_escape_string($con, $rep_pass);
 
-$query = "SELECT email, password FROM users WHERE email ='" . $_SESSION['email'] . "'";
-$result = mysqli_query($con, $query)or die($mysqli_error($con));
-$row = mysqli_fetch_array($result);
+// Using pg_escape_string to sanitize inputs (optional if you use pg_query_params)
+$old_pass = pg_escape_string($con, $old_pass);
+$new_pass = pg_escape_string($con, $new_pass);
+$rep_pass = pg_escape_string($con, $rep_pass);
 
+// Fetch current password from DB securely
+$query = "SELECT email, password FROM users WHERE email = $1";
+$result = pg_query_params($con, $query, array($_SESSION['email']));
+
+if (!$result) {
+    die("Error in query: " . pg_last_error($con));
+}
+
+$row = pg_fetch_assoc($result);
 $orig_pass = $row['password'];
 
-//check old password and password taken from db
-if ($new_pass != $rep_pass) {
+// Check if new passwords match
+if ($new_pass !== $rep_pass) {
     header('location: settings.php?error=The two passwords don\'t match.');
+    exit;
+}
+
+// Check old password matches DB password (you should ideally hash passwords)
+if ($old_pass === $orig_pass) {
+    $update_query = "UPDATE users SET password = $1 WHERE email = $2";
+    $update_result = pg_query_params($con, $update_query, array($new_pass, $_SESSION['email']));
+    if (!$update_result) {
+        die("Error updating password: " . pg_last_error($con));
+    }
+    header('location: settings.php?error=Password Updated Successfully');
+    exit;
 } else {
-    if ($old_pass == $orig_pass) {
-        $query = "UPDATE  users SET password = '" . $new_pass . "' WHERE email = '" . $_SESSION['email'] . "'";
-        mysqli_query($con, $query) or die($mysqli_error($con));
-        header('location: settings.php?error=Password Updated Successfully');
-    } else
-        header('location: settings.php?error=Wrong Old Password.');
+    header('location: settings.php?error=Wrong Old Password.');
+    exit;
 }
 ?>
