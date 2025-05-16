@@ -1,13 +1,18 @@
 <?php
-    $con = mysqli_connect(
-        getenv('DB_HOST'),
-        getenv('DB_USER'),
-        getenv('DB_PASS'),
-        getenv('DB_NAME'),
-        getenv('DB_PORT')
-    ) or die(mysqli_error($con));
+// Connect to Postgres database using environment variables
+$conn_string = "host=" . getenv('DB_HOST') . 
+               " port=" . getenv('DB_PORT') . 
+               " dbname=" . getenv('DB_NAME') . 
+               " user=" . getenv('DB_USER') . 
+               " password=" . getenv('DB_PASSWORD');
 
-    if (!isset($_SESSION)) {
-        session_start();
-    }
+$con = pg_connect($conn_string);
+
+if (!$con) {
+    die("Error in connection: " . pg_last_error());
+}
+
+if(!isset($_SESSION)){
+  session_start();
+}
 ?>
