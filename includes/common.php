@@ -1,18 +1,28 @@
 <?php
-// Connect to Postgres database using environment variables
-$conn_string = "host=" . getenv('DB_HOST') . 
-               " port=" . getenv('DB_PORT') . 
-               " dbname=" . getenv('DB_NAME') . 
-               " user=" . getenv('DB_USER') . 
-               " password=" . getenv('DB_PASSWORD');
+// Start session if not started
+if (!isset($_SESSION)) {
+    session_start();
+}
 
+// Get database URL from environment variable
+$db_url = getenv('DATABASE_URL');
+
+// Parse the URL to get connection parameters
+$dbopts = parse_url($db_url);
+
+$host = $dbopts["host"];
+$port = $dbopts["port"];
+$dbname = ltrim($dbopts["path"],'/');
+$user = $dbopts["user"];
+$password = $dbopts["pass"];
+
+// Create connection string for pg_connect
+$conn_string = "host=$host port=$port dbname=$dbname user=$user password=$password";
+
+// Connect to PostgreSQL
 $con = pg_connect($conn_string);
 
 if (!$con) {
     die("Error in connection: " . pg_last_error());
-}
-
-if(!isset($_SESSION)){
-  session_start();
 }
 ?>
