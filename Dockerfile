@@ -1,6 +1,10 @@
 # Use an official PHP-Apache image
 FROM php:8.2-apache
 
+# Install PostgreSQL extension dependencies and enable extensions
+RUN apt-get update && apt-get install -y libpq-dev \
+    && docker-php-ext-install pgsql pdo_pgsql
+
 # Copy all files into the container
 COPY . /var/www/html/
 
